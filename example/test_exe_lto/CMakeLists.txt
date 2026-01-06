@@ -82,7 +82,7 @@ if(LTO_TOOLS_AVAILABLE)
     message(STATUS "[LTO-Test] Global LTO_OPT_PASSES: ${LTO_OPT_PASSES}")
 
     add_win_executable_lto(test_exe_lto CONSOLE
-	    OPT_PASSES "-load-pass-plugin $ENV{LLVM_LTO_PATH} -passes=mba"
+	    OPT_PASSES "-load-pass-plugin $ENV{LLVM_LTO_PATH} -passes=$ENV{LLVM_LTO_PASS}"
         SOURCES 
             main.cpp 
             helper.cpp
