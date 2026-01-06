@@ -9,3 +9,6 @@ add_subdirectory(example/test_exe)
 add_subdirectory(example/test_dll)
 add_subdirectory(example/test_lib)
 add_subdirectory(example/test_driver)
+
+# LTO 测试 (仅当 LTO 工具可用时)
+add_subdirectory(example/test_exe_lto)
