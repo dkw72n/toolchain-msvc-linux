@@ -1,6 +1,6 @@
 /**
  * @file mathlib.cpp
- * @brief 数学库实现
+ * @brief Math library implementation
  */
 
 #include "mathlib.h"

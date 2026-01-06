@@ -1,6 +1,6 @@
 /**
  * @file dllmain.cpp
- * @brief DLL 入口点
+ * @brief DLL Entry Point
  */
 
 #include <Windows.h>
@@ -10,16 +10,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        // DLL 被加载到进程
+        // DLL loaded into process
         break;
     case DLL_THREAD_ATTACH:
-        // 新线程被创建
+        // New thread created
         break;
     case DLL_THREAD_DETACH:
-        // 线程退出
+        // Thread exited
         break;
     case DLL_PROCESS_DETACH:
-        // DLL 被卸载
+        // DLL unloaded
         break;
     }
     return TRUE;

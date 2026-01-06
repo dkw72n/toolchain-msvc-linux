@@ -1,6 +1,6 @@
 /**
  * @file stringlib.h
- * @brief 字符串处理库头文件
+ * @brief String processing library header file
  */
 
 #pragma once
@@ -8,22 +8,22 @@
 namespace stringlib {
 
 /**
- * @brief 获取字符串长度
+ * @brief Get string length
  */
 int strlen(const char* str);
 
 /**
- * @brief 字符串拷贝
+ * @brief String copy
  */
 char* strcpy(char* dest, const char* src);
 
 /**
- * @brief 字符串比较
+ * @brief String compare
  */
 int strcmp(const char* str1, const char* str2);
 
 /**
- * @brief 字符串翻转
+ * @brief String reverse
  */
 void strrev(char* str);
 

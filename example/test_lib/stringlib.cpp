@@ -1,6 +1,6 @@
 /**
  * @file stringlib.cpp
- * @brief 字符串处理库实现
+ * @brief String processing library implementation
  */
 
 #include "stringlib.h"
@@ -27,7 +27,7 @@ char* strcpy(char* dest, const char* src)
     char* ptr = dest;
     while ((*dest++ = *src++))
     {
-        // 拷贝直到遇到 null 终止符
+        // Copy until null terminator is encountered
     }
     return ptr;
 }

@@ -1,6 +1,6 @@
 /**
  * @file mathlib.h
- * @brief 数学库头文件
+ * @brief Math library header file
  */
 
 #pragma once
@@ -8,22 +8,22 @@
 namespace mathlib {
 
 /**
- * @brief 计算两个整数的最大公约数
+ * @brief Calculate Greatest Common Divisor (GCD) of two integers
  */
 int gcd(int a, int b);
 
 /**
- * @brief 计算两个整数的最小公倍数
+ * @brief Calculate Least Common Multiple (LCM) of two integers
  */
 int lcm(int a, int b);
 
 /**
- * @brief 计算幂运算
+ * @brief Calculate power
  */
 long long power(int base, int exp);
 
 /**
- * @brief 判断是否为质数
+ * @brief Check if prime
  */
 bool isPrime(int n);
 

@@ -1680,5 +1680,5 @@ else()
 endif()
 toolchain_log("INFO" "========================================")
 
-# 生成 compile_commands.json 供 VSCode IntelliSense 使用
+# Generate compile_commands.json for VSCode IntelliSense
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

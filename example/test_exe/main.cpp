@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @brief 测试 Windows 控制台可执行文件
+ * @brief Test Windows console executable
  */
 
 #include <Windows.h>
@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
     printf("Hello from test_exe!\n");
     printf("This is a Windows console application built with cmake_msvc toolchain.\n");
     
-    // 获取系统信息
+    // Get system information
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
     

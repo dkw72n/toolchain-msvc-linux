@@ -1,6 +1,6 @@
 /**
  * @file exports.cpp
- * @brief DLL 导出函数实现
+ * @brief DLL export functions implementation
  */
 
 #include <Windows.h>
@@ -8,7 +8,7 @@
 extern "C" {
 
 /**
- * @brief 示例导出函数 - 加法
+ * @brief Sample export function - Add
  */
 __declspec(dllexport) int Add(int a, int b)
 {
@@ -16,7 +16,7 @@ __declspec(dllexport) int Add(int a, int b)
 }
 
 /**
- * @brief 示例导出函数 - 乘法
+ * @brief Sample export function - Multiply
  */
 __declspec(dllexport) int Multiply(int a, int b)
 {
@@ -24,7 +24,7 @@ __declspec(dllexport) int Multiply(int a, int b)
 }
 
 /**
- * @brief 示例导出函数 - 获取问候语
+ * @brief Sample export function - Get greeting
  */
 __declspec(dllexport) const char* GetGreeting()
 {

@@ -1,26 +1,25 @@
 /**
  * @file helper.cpp
- * @brief 辅助函数文件
- * 
- * 此文件包含一些简单的辅助函数，用于测试 LTO 跨编译单元优化
- * 这些函数在 LTO 优化时可能会被内联到调用点
+ * @brief Helper functions file
+ * This file contains some simple helper functions for testing LTO cross-translation unit optimization
+ * These functions may be inlined at the call site during LTO optimization
  */
 
 #include <Windows.h>
 
-// 简单的加法函数 - LTO 应该能够内联这个函数
+// Simple addition function - LTO should be able to inline this function
 extern "C" int add_numbers(int a, int b)
 {
     return a + b;
 }
 
-// 简单的乘法函数 - LTO 应该能够内联这个函数
+// Simple multiplication function - LTO should be able to inline this function
 extern "C" int multiply_numbers(int a, int b)
 {
     return a * b;
 }
 
-// 打印数字函数 - 使用 WriteConsoleA 避免 variadic 函数
+// Print number function - Use WriteConsoleA to avoid variadic functions
 extern "C" void print_number(int value)
 {
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -29,21 +28,21 @@ extern "C" void print_number(int value)
     char buffer[16];
     int pos = 0;
     
-    // 处理负数
+    // Handle negative numbers
     if (value < 0)
     {
         buffer[pos++] = '-';
         value = -value;
     }
     
-    // 处理零
+    // Handle zero
     if (value == 0)
     {
         buffer[pos++] = '0';
     }
     else
     {
-        // 转换数字为字符串（反向）
+        // Convert number to string (reversed)
         char temp[16];
         int tempPos = 0;
         while (value > 0)
@@ -51,7 +50,7 @@ extern "C" void print_number(int value)
             temp[tempPos++] = '0' + (value % 10);
             value /= 10;
         }
-        // 反转
+        // Reverse
         while (tempPos > 0)
         {
             buffer[pos++] = temp[--tempPos];
