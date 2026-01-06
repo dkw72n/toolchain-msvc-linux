@@ -1,0 +1,45 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja-msvc-linux",
+      "displayName": "Ninja (toolchain-msvc-linux)",
+      "description": "Use Ninja + custom msvc-linux toolchain",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-msvc-linux.cmake",
+        "WDKBASE": "C:/Program Files (x86)/Windows Kits/10",
+        "MSVCBASE": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207",
+        "WDKVERSION": "10.0.22621.0"
+      }
+    },
+    {
+      "name": "make-msvc-linux",
+      "displayName": "Unix Makefiles (toolchain-msvc-linux)",
+      "description": "Use GNU Make + custom msvc-linux toolchain",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-msvc-linux.cmake",
+        "WDKBASE": "$env{HOME}/winsdk/sdk",
+        "MSVCBASE": "/home/u0_a274/winsdk/crt"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "ninja",
+      "configurePreset": "ninja-msvc-linux"
+    },
+    {
+      "name": "make",
+      "configurePreset": "make-msvc-linux"
+    }
+  ]
+}
