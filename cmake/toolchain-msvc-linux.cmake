@@ -506,21 +506,37 @@ function(add_win_driver target_name)
     add_library(${target_name} SHARED ${ARG_SOURCES} ${ARG_UNPARSED_ARGUMENTS})
     
     # Kernel mode include paths
-    target_include_directories(${target_name} PRIVATE
+    # Note: Order matters! KM headers should be searched first to avoid
+    # accidentally including user-mode headers (e.g., ucrt's stdio.h)
+    target_include_directories(${target_name} BEFORE PRIVATE
         "${WDK_INCLUDE_KM}"
         "${WDK_INCLUDE_SHARED}"
+        "${MSVC_INCLUDE}"
     )
     
     # Kernel mode compiler definitions
+    # NTSTRSAFE_LIB: Use kernel-mode safe string functions from ntstrsafe.lib
+    #                This prevents ntstrsafe.h from using user-mode CRT functions
     target_compile_definitions(${target_name} PRIVATE
         _AMD64_
         _WIN64
         AMD64
         DEPRECATE_DDK_FUNCTIONS=1
         _KERNEL_MODE
+        NTSTRSAFE_LIB
     )
     
     # Kernel mode compile options
+    # Note: We explicitly add kernel-mode include paths here because the global
+    # CMAKE_C_FLAGS already includes UCRT paths. By adding these with BEFORE,
+    # clang will search these paths first and find kernel-mode headers.
+    target_compile_options(${target_name} BEFORE PRIVATE
+        # Kernel-specific system include paths - must come BEFORE any UCRT paths
+        "/imsvc${WDK_INCLUDE_KM}"
+        "/imsvc${WDK_INCLUDE_SHARED}"
+        "/imsvc${MSVC_INCLUDE}"
+    )
+    
     target_compile_options(${target_name} PRIVATE
         /kernel
         /GS-
