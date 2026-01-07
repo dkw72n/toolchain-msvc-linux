@@ -359,6 +359,25 @@ function(generate_vfsoverlay)
         endif()
     endforeach()
     
+    # Process KMDF WDF include directories
+    set(_kmdf_version "1.15")
+    set(_kmdf_wdf_dir "${WDKBASE}/Include/wdf/kmdf/${_kmdf_version}")
+    if(IS_DIRECTORY "${_kmdf_wdf_dir}")
+        file(GLOB_RECURSE _wdf_headers "${_kmdf_wdf_dir}/*")
+        set(_wdf_entries "")
+        foreach(_header ${_wdf_headers})
+            get_filename_component(_filename "${_header}" NAME)
+            string(TOLOWER "${_filename}" _lower_filename)
+            if(NOT "${_filename}" STREQUAL "${_lower_filename}")
+                string(APPEND _wdf_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+            endif()
+        endforeach()
+        
+        if(_wdf_entries)
+            string(APPEND _vfs_content "    {\n      'name': '${_kmdf_wdf_dir}',\n      'type': 'directory',\n      'contents': [\n${_wdf_entries}      ]\n    },\n")
+        endif()
+    endif()
+    
     string(APPEND _vfs_content "  ]\n}\n")
     
     # Only write the file if content has changed to avoid triggering CMake re-runs
@@ -566,8 +585,9 @@ function(add_win_driver target_name)
             set(_kmdf_version "1.15")
         endif()
         
+        set(_kmdf_include_path "${WDKBASE}/Include/wdf/kmdf/${_kmdf_version}")
         target_include_directories(${target_name} PRIVATE
-            "${WDKBASE}/Include/wdf/kmdf/${_kmdf_version}"
+            "${_kmdf_include_path}"
         )
         target_link_libraries(${target_name} PRIVATE
             WdfLdr.lib
