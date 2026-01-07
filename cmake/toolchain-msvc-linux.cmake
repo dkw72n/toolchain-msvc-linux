@@ -18,6 +18,11 @@ set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR AMD64)
 set(CMAKE_CROSSCOMPILING TRUE)
 
+# Prevent CMake from adding standard libraries (kernel32.lib, etc.) by default.
+# We will handle dependencies explicitly in our add_win_* functions.
+set(CMAKE_C_STANDARD_LIBRARIES "" CACHE STRING "" FORCE)
+set(CMAKE_CXX_STANDARD_LIBRARIES "" CACHE STRING "" FORCE)
+
 # =============================================================================
 # Pass Required Variables to try_compile
 # =============================================================================
@@ -557,6 +562,7 @@ function(add_win_driver target_name)
         ntoskrnl.lib
         hal.lib
         wmilib.lib
+        BufferOverflowK.lib
     )
     
     # Additional libraries
@@ -568,6 +574,9 @@ function(add_win_driver target_name)
     set_target_properties(${target_name} PROPERTIES
         SUFFIX ".sys"
         PREFIX ""
+        # Clear default libraries to avoid linking user-mode libs (kernel32, etc.)
+        C_STANDARD_LIBRARIES ""
+        CXX_STANDARD_LIBRARIES ""
     )
     
     # Add VFS overlay as dependency
