@@ -1,0 +1,26 @@
+function(toolchain_log level message)
+    if(level STREQUAL "ERROR")
+        message(FATAL_ERROR "[MSVC-Toolchain] ${message}")
+    elseif(level STREQUAL "WARNING")
+        message(WARNING "[MSVC-Toolchain] ${message}")
+    else()
+        message(STATUS "[MSVC-Toolchain] ${message}")
+    endif()
+endfunction()
+
+# Check if directory exists and is valid
+function(check_directory_valid path description result_var)
+    if(NOT DEFINED ${path} OR "${${path}}" STREQUAL "")
+        set(${result_var} FALSE PARENT_SCOPE)
+        toolchain_log("ERROR" "${description} (${path}) is not defined")
+        return()
+    endif()
+    
+    if(NOT IS_DIRECTORY "${${path}}")
+        set(${result_var} FALSE PARENT_SCOPE)
+        toolchain_log("ERROR" "${description} path does not exist: ${${path}}")
+        return()
+    endif()
+    
+    set(${result_var} TRUE PARENT_SCOPE)
+endfunction()
