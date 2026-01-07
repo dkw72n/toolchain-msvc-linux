@@ -516,7 +516,10 @@ function(add_win_driver target_name)
     
     # Kernel mode compiler definitions
     # NTSTRSAFE_LIB: Use kernel-mode safe string functions from ntstrsafe.lib
-    #                This prevents ntstrsafe.h from using user-mode CRT functions
+    #                This prevents ntstrsafe.h from using inline implementations
+    # _NO_CRT_STDIO_INLINE: Disable UCRT's inline stdio functions (like _vsnprintf)
+    #                       that would reference user-mode CRT functions like
+    #                       __stdio_common_vsprintf which is not available in kernel mode
     target_compile_definitions(${target_name} PRIVATE
         _AMD64_
         _WIN64
@@ -524,20 +527,22 @@ function(add_win_driver target_name)
         DEPRECATE_DDK_FUNCTIONS=1
         _KERNEL_MODE
         NTSTRSAFE_LIB
+        _NO_CRT_STDIO_INLINE
     )
     
     # Kernel mode compile options
-    # Note: We explicitly add kernel-mode include paths here because the global
-    # CMAKE_C_FLAGS already includes UCRT paths. By adding these with BEFORE,
-    # clang will search these paths first and find kernel-mode headers.
-    target_compile_options(${target_name} BEFORE PRIVATE
-        # Kernel-specific system include paths - must come BEFORE any UCRT paths
+    # For kernel drivers, we need to completely remove user-mode include paths
+    # (especially UCRT) and only use kernel-mode paths.
+    # The /X flag tells clang to ignore standard include paths, then we
+    # explicitly add only the kernel-mode paths we need.
+    target_compile_options(${target_name} PRIVATE
+        # Ignore standard system include paths (removes UCRT paths from CMAKE_C_FLAGS)
+        /X
+        # Add kernel-mode include paths as system includes
         "/imsvc${WDK_INCLUDE_KM}"
         "/imsvc${WDK_INCLUDE_SHARED}"
         "/imsvc${MSVC_INCLUDE}"
-    )
-    
-    target_compile_options(${target_name} PRIVATE
+        # Kernel-specific options
         /kernel
         /GS-
         /Gy
