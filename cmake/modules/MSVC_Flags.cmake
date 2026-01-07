@@ -130,3 +130,9 @@ set(MSVC_KERNEL_MODE_LINK_OPTIONS
     "/ENTRY:DriverEntry"
     "/NODEFAULTLIB"
 )
+
+set(MSVC_KERNEL_MODE_LIBS
+    ntoskrnl.lib
+    hal.lib
+    BufferOverflowK.lib
+)

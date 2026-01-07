@@ -139,10 +139,11 @@ function(add_win_driver target_name)
         ${MSVC_KERNEL_MODE_LINK_OPTIONS}
     )
     
-    # Link specified libraries
-    if(ARG_LIBS)
-        target_link_libraries(${target_name} PRIVATE ${ARG_LIBS})
-    endif()
+    # Link default kernel libraries and user-specified libraries
+    target_link_libraries(${target_name} PRIVATE 
+        ${MSVC_KERNEL_MODE_LIBS}
+        ${ARG_LIBS}
+    )
 endfunction()
 
 # -----------------------------------------------------------------------------
@@ -313,7 +314,8 @@ function(add_win_driver_lto target_name)
         ${MSVC_KERNEL_MODE_LINK_OPTIONS}
     )
     
-    set(_libs "")
+    # Combine default kernel libraries and user-specified libraries
+    set(_libs ${MSVC_KERNEL_MODE_LIBS})
     foreach(_lib ${ARG_LIBS})
         list(APPEND _libs "${_lib}")
     endforeach()
