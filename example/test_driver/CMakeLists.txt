@@ -7,4 +7,5 @@ add_win_driver(test_driver KMDF
         aux_klib.lib
         ntstrsafe.lib
         wdmsec.lib
+        BufferOverflowK.lib
 )

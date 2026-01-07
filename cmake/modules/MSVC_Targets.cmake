@@ -138,6 +138,11 @@ function(add_win_driver target_name)
         ${MSVC_KERNEL_MODE_LINK_PATHS}
         ${MSVC_KERNEL_MODE_LINK_OPTIONS}
     )
+    
+    # Link specified libraries
+    if(ARG_LIBS)
+        target_link_libraries(${target_name} PRIVATE ${ARG_LIBS})
+    endif()
 endfunction()
 
 # -----------------------------------------------------------------------------

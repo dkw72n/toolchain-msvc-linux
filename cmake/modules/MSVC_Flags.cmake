@@ -17,6 +17,7 @@ set(MSVC_USER_MODE_INCLUDES_LTO
 
 set(MSVC_KERNEL_MODE_INCLUDES_LTO
     "-imsvc" "${WDK_INCLUDE_KM}"
+    "-imsvc" "${WDK_INCLUDE_KMDF}"
     "-imsvc" "${WDK_INCLUDE_SHARED}"
     "-imsvc" "${MSVC_INCLUDE}"
 )
@@ -32,6 +33,7 @@ set(MSVC_USER_MODE_INCLUDES
 
 set(MSVC_KERNEL_MODE_INCLUDES
     "SHELL:-imsvc \"${WDK_INCLUDE_KM}\""
+    "SHELL:-imsvc \"${WDK_INCLUDE_KMDF}\""
     "SHELL:-imsvc \"${WDK_INCLUDE_SHARED}\""
     "SHELL:-imsvc \"${MSVC_INCLUDE}\""
 )
