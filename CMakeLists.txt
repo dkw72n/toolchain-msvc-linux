@@ -9,6 +9,3 @@ add_subdirectory(example/test_exe)
 add_subdirectory(example/test_dll)
 add_subdirectory(example/test_lib)
 add_subdirectory(example/test_driver)
-
-# LTO test (only when LTO tools are available)
-add_subdirectory(example/test_exe_lto)
