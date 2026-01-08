@@ -96,6 +96,11 @@ function(add_win_library target_name)
             endforeach()
         endif()
     endif()
+    
+    # Link user-specified libraries
+    if(ARG_LIBS)
+        target_link_libraries(${target_name} PRIVATE ${ARG_LIBS})
+    endif()
 endfunction()
 
 # Wrapper for DLL
