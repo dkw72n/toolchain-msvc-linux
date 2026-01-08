@@ -4,6 +4,14 @@
 
 set(VFSOVERLAY_FILE "${CMAKE_BINARY_DIR}/vfsoverlay.yaml")
 
+# Helper function: Convert first letter to uppercase (e.g., "driverspecs.h" -> "Driverspecs.h")
+function(string_capitalize input output)
+    string(SUBSTRING "${input}" 0 1 _first)
+    string(SUBSTRING "${input}" 1 -1 _rest)
+    string(TOUPPER "${_first}" _first_upper)
+    set(${output} "${_first_upper}${_rest}" PARENT_SCOPE)
+endfunction()
+
 function(generate_case_mapping input_dir output_list)
     set(_mappings "")
     
@@ -34,9 +42,20 @@ function(generate_vfsoverlay)
         foreach(_header ${_msvc_headers})
             get_filename_component(_filename "${_header}" NAME)
             string(TOLOWER "${_filename}" _lower_filename)
+            string(TOUPPER "${_filename}" _upper_filename)
+            string_capitalize("${_lower_filename}" _capitalized_filename)
+            
             if(NOT "${_filename}" STREQUAL "${_lower_filename}")
-                get_filename_component(_dir "${_header}" DIRECTORY)
+                # File has mixed case, add lowercase alias
                 string(APPEND _msvc_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+            else()
+                # File is already lowercase, add uppercase and capitalized aliases
+                if(NOT "${_filename}" STREQUAL "${_upper_filename}")
+                    string(APPEND _msvc_entries "        { 'name': '${_upper_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                endif()
+                if(NOT "${_filename}" STREQUAL "${_capitalized_filename}" AND NOT "${_capitalized_filename}" STREQUAL "${_upper_filename}")
+                    string(APPEND _msvc_entries "        { 'name': '${_capitalized_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                endif()
             endif()
         endforeach()
         
@@ -53,8 +72,20 @@ function(generate_vfsoverlay)
             foreach(_header ${_wdk_headers})
                 get_filename_component(_filename "${_header}" NAME)
                 string(TOLOWER "${_filename}" _lower_filename)
+                string(TOUPPER "${_filename}" _upper_filename)
+                string_capitalize("${_lower_filename}" _capitalized_filename)
+                
                 if(NOT "${_filename}" STREQUAL "${_lower_filename}")
+                    # File has mixed case, add lowercase alias
                     string(APPEND _wdk_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                else()
+                    # File is already lowercase, add uppercase and capitalized aliases
+                    if(NOT "${_filename}" STREQUAL "${_upper_filename}")
+                        string(APPEND _wdk_entries "        { 'name': '${_upper_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                    endif()
+                    if(NOT "${_filename}" STREQUAL "${_capitalized_filename}" AND NOT "${_capitalized_filename}" STREQUAL "${_upper_filename}")
+                        string(APPEND _wdk_entries "        { 'name': '${_capitalized_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                    endif()
                 endif()
             endforeach()
             
@@ -73,8 +104,20 @@ function(generate_vfsoverlay)
         foreach(_header ${_wdf_headers})
             get_filename_component(_filename "${_header}" NAME)
             string(TOLOWER "${_filename}" _lower_filename)
+            string(TOUPPER "${_filename}" _upper_filename)
+            string_capitalize("${_lower_filename}" _capitalized_filename)
+            
             if(NOT "${_filename}" STREQUAL "${_lower_filename}")
+                # File has mixed case, add lowercase alias
                 string(APPEND _wdf_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+            else()
+                # File is already lowercase, add uppercase and capitalized aliases
+                if(NOT "${_filename}" STREQUAL "${_upper_filename}")
+                    string(APPEND _wdf_entries "        { 'name': '${_upper_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                endif()
+                if(NOT "${_filename}" STREQUAL "${_capitalized_filename}" AND NOT "${_capitalized_filename}" STREQUAL "${_upper_filename}")
+                    string(APPEND _wdf_entries "        { 'name': '${_capitalized_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+                endif()
             endif()
         endforeach()
         
@@ -82,7 +125,7 @@ function(generate_vfsoverlay)
             string(APPEND _vfs_content "    {\n      'name': '${_kmdf_wdf_dir}',\n      'type': 'directory',\n      'contents': [\n${_wdf_entries}      ]\n    },\n")
         endif()
     endif()
-    
+
     string(APPEND _vfs_content "  ]\n}\n")
     
     # Only write the file if content has changed to avoid triggering CMake re-runs
