@@ -1,33 +1,38 @@
 # =============================================================================
 # VFS Overlay Map Generation for Case-Insensitive Header Resolution
 # =============================================================================
+# Since 'case-sensitive': 'false' is set in the VFS overlay, we only need to
+# map each file once with a lowercase name alias pointing to the actual file.
+# The VFS will handle case-insensitive matching automatically.
+#
+# IMPORTANT: Only process top-level files in each include directory.
+# Do NOT use GLOB_RECURSE as it would incorrectly map files from subdirectories
+# like cliext/utility to utility, causing conflicts with standard headers.
+# =============================================================================
 
 set(VFSOVERLAY_FILE "${CMAKE_BINARY_DIR}/vfsoverlay.yaml")
 
-# Helper function: Convert first letter to uppercase (e.g., "driverspecs.h" -> "Driverspecs.h")
-function(string_capitalize input output)
-    string(SUBSTRING "${input}" 0 1 _first)
-    string(SUBSTRING "${input}" 1 -1 _rest)
-    string(TOUPPER "${_first}" _first_upper)
-    set(${output} "${_first_upper}${_rest}" PARENT_SCOPE)
-endfunction()
-
-function(generate_case_mapping input_dir output_list)
-    set(_mappings "")
+# Helper function: Generate lowercase alias entries for a directory
+# Only processes TOP-LEVEL files (no recursion) to avoid subdirectory conflicts
+function(generate_vfs_entries_for_dir dir_path out_entries)
+    set(_entries "")
     
-    file(GLOB_RECURSE _all_files "${input_dir}/*")
-    foreach(_file ${_all_files})
-        get_filename_component(_filename "${_file}" NAME)
-        string(TOLOWER "${_filename}" _lower_filename)
-        
-        # Only add mapping if case differs
-        if(NOT "${_filename}" STREQUAL "${_lower_filename}")
-            get_filename_component(_dir "${_file}" DIRECTORY)
-            string(APPEND _mappings "      - name: '${_lower_filename}'\n        type: file\n        external-contents: '${_file}'\n")
-        endif()
-    endforeach()
+    if(IS_DIRECTORY "${dir_path}")
+        # Use GLOB (not GLOB_RECURSE) to only get top-level files
+        file(GLOB _headers "${dir_path}/*")
+        foreach(_header ${_headers})
+            # Skip directories - only process files
+            if(IS_DIRECTORY "${_header}")
+                continue()
+            endif()
+            get_filename_component(_filename "${_header}" NAME)
+            string(TOLOWER "${_filename}" _lower_filename)
+            # With 'case-sensitive': 'false', a lowercase alias is sufficient
+            string(APPEND _entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
+        endforeach()
+    endif()
     
-    set(${output_list} "${_mappings}" PARENT_SCOPE)
+    set(${out_entries} "${_entries}" PARENT_SCOPE)
 endfunction()
 
 function(generate_vfsoverlay)
@@ -36,94 +41,25 @@ function(generate_vfsoverlay)
     set(_vfs_content "{\n  'version': 0,\n  'case-sensitive': 'false',\n  'roots': [\n")
     
     # Process MSVC include directory
-    if(IS_DIRECTORY "${MSVC_INCLUDE}")
-        file(GLOB_RECURSE _msvc_headers "${MSVC_INCLUDE}/*")
-        set(_msvc_entries "")
-        foreach(_header ${_msvc_headers})
-            get_filename_component(_filename "${_header}" NAME)
-            string(TOLOWER "${_filename}" _lower_filename)
-            string(TOUPPER "${_filename}" _upper_filename)
-            string_capitalize("${_lower_filename}" _capitalized_filename)
-            
-            if(NOT "${_filename}" STREQUAL "${_lower_filename}")
-                # File has mixed case, add lowercase alias
-                string(APPEND _msvc_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-            else()
-                # File is already lowercase, add uppercase and capitalized aliases
-                if(NOT "${_filename}" STREQUAL "${_upper_filename}")
-                    string(APPEND _msvc_entries "        { 'name': '${_upper_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                endif()
-                if(NOT "${_filename}" STREQUAL "${_capitalized_filename}" AND NOT "${_capitalized_filename}" STREQUAL "${_upper_filename}")
-                    string(APPEND _msvc_entries "        { 'name': '${_capitalized_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                endif()
-            endif()
-        endforeach()
-        
-        if(_msvc_entries)
-            string(APPEND _vfs_content "    {\n      'name': '${MSVC_INCLUDE}',\n      'type': 'directory',\n      'contents': [\n${_msvc_entries}      ]\n    },\n")
-        endif()
+    generate_vfs_entries_for_dir("${MSVC_INCLUDE}" _msvc_entries)
+    if(_msvc_entries)
+        string(APPEND _vfs_content "    {\n      'name': '${MSVC_INCLUDE}',\n      'type': 'directory',\n      'contents': [\n${_msvc_entries}      ]\n    },\n")
     endif()
     
     # Process WDK include directories
     foreach(_wdk_dir ${WDK_INCLUDE_UM} ${WDK_INCLUDE_UCRT} ${WDK_INCLUDE_SHARED} ${WDK_INCLUDE_KM})
-        if(IS_DIRECTORY "${_wdk_dir}")
-            file(GLOB_RECURSE _wdk_headers "${_wdk_dir}/*")
-            set(_wdk_entries "")
-            foreach(_header ${_wdk_headers})
-                get_filename_component(_filename "${_header}" NAME)
-                string(TOLOWER "${_filename}" _lower_filename)
-                string(TOUPPER "${_filename}" _upper_filename)
-                string_capitalize("${_lower_filename}" _capitalized_filename)
-                
-                if(NOT "${_filename}" STREQUAL "${_lower_filename}")
-                    # File has mixed case, add lowercase alias
-                    string(APPEND _wdk_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                else()
-                    # File is already lowercase, add uppercase and capitalized aliases
-                    if(NOT "${_filename}" STREQUAL "${_upper_filename}")
-                        string(APPEND _wdk_entries "        { 'name': '${_upper_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                    endif()
-                    if(NOT "${_filename}" STREQUAL "${_capitalized_filename}" AND NOT "${_capitalized_filename}" STREQUAL "${_upper_filename}")
-                        string(APPEND _wdk_entries "        { 'name': '${_capitalized_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                    endif()
-                endif()
-            endforeach()
-            
-            if(_wdk_entries)
-                string(APPEND _vfs_content "    {\n      'name': '${_wdk_dir}',\n      'type': 'directory',\n      'contents': [\n${_wdk_entries}      ]\n    },\n")
-            endif()
+        generate_vfs_entries_for_dir("${_wdk_dir}" _wdk_entries)
+        if(_wdk_entries)
+            string(APPEND _vfs_content "    {\n      'name': '${_wdk_dir}',\n      'type': 'directory',\n      'contents': [\n${_wdk_entries}      ]\n    },\n")
         endif()
     endforeach()
     
     # Process KMDF WDF include directories
     set(_kmdf_version "1.15")
     set(_kmdf_wdf_dir "${WDKBASE}/Include/wdf/kmdf/${_kmdf_version}")
-    if(IS_DIRECTORY "${_kmdf_wdf_dir}")
-        file(GLOB_RECURSE _wdf_headers "${_kmdf_wdf_dir}/*")
-        set(_wdf_entries "")
-        foreach(_header ${_wdf_headers})
-            get_filename_component(_filename "${_header}" NAME)
-            string(TOLOWER "${_filename}" _lower_filename)
-            string(TOUPPER "${_filename}" _upper_filename)
-            string_capitalize("${_lower_filename}" _capitalized_filename)
-            
-            if(NOT "${_filename}" STREQUAL "${_lower_filename}")
-                # File has mixed case, add lowercase alias
-                string(APPEND _wdf_entries "        { 'name': '${_lower_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-            else()
-                # File is already lowercase, add uppercase and capitalized aliases
-                if(NOT "${_filename}" STREQUAL "${_upper_filename}")
-                    string(APPEND _wdf_entries "        { 'name': '${_upper_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                endif()
-                if(NOT "${_filename}" STREQUAL "${_capitalized_filename}" AND NOT "${_capitalized_filename}" STREQUAL "${_upper_filename}")
-                    string(APPEND _wdf_entries "        { 'name': '${_capitalized_filename}', 'type': 'file', 'external-contents': '${_header}' },\n")
-                endif()
-            endif()
-        endforeach()
-        
-        if(_wdf_entries)
-            string(APPEND _vfs_content "    {\n      'name': '${_kmdf_wdf_dir}',\n      'type': 'directory',\n      'contents': [\n${_wdf_entries}      ]\n    },\n")
-        endif()
+    generate_vfs_entries_for_dir("${_kmdf_wdf_dir}" _wdf_entries)
+    if(_wdf_entries)
+        string(APPEND _vfs_content "    {\n      'name': '${_kmdf_wdf_dir}',\n      'type': 'directory',\n      'contents': [\n${_wdf_entries}      ]\n    },\n")
     endif()
 
     string(APPEND _vfs_content "  ]\n}\n")
