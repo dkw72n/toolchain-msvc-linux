@@ -137,13 +137,36 @@ function(_lto_merge_and_optimize target_name bc_files opt_passes output_obj_var)
     )
     
     # Step 2: Optimize merged bitcode using opt
+    set(_opt_deps "${_merged_bc}")
+    
+    # Extract plugin dependencies from opt_passes
+    # Look for -load-pass-plugin followed by a path
+    set(_plugin_deps "")
+    set(_prev_token "")
+    
+    foreach(_token IN LISTS _lto_opt_passes_list)
+        if(_prev_token STREQUAL "-load-pass-plugin")
+            # This token is a plugin path
+            # Check if it's a target name (rshit) or a full path
+            get_filename_component(_plugin_name "${_token}" NAME_WE)
+            message("[-] pass plugin: ${_token} ${_plugin_name}")
+            list(APPEND _plugin_deps "${_token}")
+        endif()
+        set(_prev_token "${_token}")
+    endforeach()
+    
+    # Add plugin dependencies to opt command
+    if(_plugin_deps)
+        list(APPEND _opt_deps ${_plugin_deps})
+    endif()
+    
     add_custom_command(
         OUTPUT "${_optimized_bc}"
         COMMAND ${LLVM_OPT_PATH}
             ${_lto_opt_passes_list}
             -o "${_optimized_bc}"
             "${_merged_bc}"
-        DEPENDS "${_merged_bc}"
+        DEPENDS ${_opt_deps}
         COMMENT "Optimizing bitcode for ${target_name} (passes: ${_passes})"
         VERBATIM
     )
