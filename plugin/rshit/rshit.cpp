@@ -108,7 +108,7 @@ namespace nop::detail {
             return "";
         }
         auto chosen = rand() % 4;
-        //chosen = 3;
+        chosen = 1;
         switch (chosen) {
             case 0:
             {
@@ -190,26 +190,32 @@ xchg   QWORD PTR [rsp],rax
 {nop}
 ret
 {l1}:
+{code}
 .byte 0x48, 0x83
+{l2}:
 */
                 auto l1 = label++;
+                auto l2 = label++;
                 auto nop1 = gen_nop(lv - 1, label);
                 auto nop2 = gen_nop(lv - 1, label);
                 auto nop3 = gen_nop(lv - 1, label);
                 auto nop4 = gen_nop(lv - 1, label);
+                auto code1 = gen_code(rand() % 11 + 2);
                 std::string ret = std::format(R"asm(
 pushq %rax
 {}
 leaq {}f(%rip), %rax
 {}
-addq $$2, %rax
+addq $({}f - {}f), %rax
 {}
 xchgq %rax, (%rsp)
 {}
 ret
 {}:
+{}
 .byte 0x48, 0xb8
-                )asm", nop1, l1, nop2, nop3, nop4, l1);
+{}:
+                )asm", nop1, l1, nop2, l2, l1, nop3, nop4, l1, code1, l2);
                 return ret;
             }
             case 3: {
@@ -232,14 +238,38 @@ namespace {
     // Enable/disable actual code insertion (for debugging)
     constexpr bool RSHIT_INSERT_CODE = true;
 
-    void TestBr(llvm::BranchInst* BI) {
+    constexpr bool RSHIT_ENABLE_JMP = true;
+
+    bool TestBr(llvm::BranchInst* BI) {
+        auto& Ctx = BI->getContext();
         if (!BI->isConditional()) {
             if constexpr (RSHIT_DEBUG) {
                 llvm::errs() << "Unconditional branch: " << BI->getSuccessor(0) << "\n";
+
+                llvm::BlockAddress::get(BI->getSuccessor(0))->printAsOperand(llvm::errs(), true);
+                
             }
-            auto VoidFT = llvm::FunctionType::get(llvm::Type::getVoidTy(BI->getContext()), { }, false);
-            return;
+            llvm::Type *VoidTy    = llvm::Type::getVoidTy(Ctx);
+            llvm::Type *Int8Ty    = llvm::Type::getInt8Ty(Ctx);                // i8
+            llvm::Type *Int8PtrTy = llvm::PointerType::getUnqual(Int8Ty);         // i8* (addrspace 0)
+            auto VoidFT = llvm::FunctionType::get(VoidTy, {Int8PtrTy}, false);
+            if constexpr (RSHIT_ENABLE_JMP){
+                llvm::IRBuilder<> builder(Ctx);
+                builder.SetInsertPoint(BI);
+                int label = 0;
+                auto jmp_rax = llvm::InlineAsm::get(VoidFT, std::format(R"asm(
+                    {}
+                    pushq $0
+                    {}
+                    ret
+                    {}
+                    .byte 0x48, 0xb8
+                )asm", nop::detail::gen_nop(2, label), nop::detail::gen_nop(2, label), nop::detail::gen_code(8)), "r", true /*hasSideEffects*/, false);
+                builder.CreateCall(jmp_rax->getFunctionType(), jmp_rax, {llvm::BlockAddress::get(BI->getSuccessor(0))});
+                return true;
+            }
         }
+        return false;
     }
 }
 //-----------------------------------------------------------------------------
@@ -274,8 +304,10 @@ namespace {
                         if constexpr (RSHIT_DEBUG) {
                             llvm::errs() << "Br: " << I << "\n";
                         }
-                        TestBr(llvm::dyn_cast<llvm::BranchInst>(&I));
                         insert = true;
+                        if (TestBr(llvm::dyn_cast<llvm::BranchInst>(&I))){
+                            insert = false;
+                        }
                         break;
                     case llvm::Instruction::Call:
                         if constexpr (RSHIT_DEBUG) {
