@@ -62,22 +62,25 @@ string(JOIN " " _user_mode_include_str ${_user_mode_inc_list})
 # -----------------------------------------------------------------------------
 # -Wno-msvc-not-found: Suppress warnings about missing MSVC paths
 # -ivfsoverlay: Use VFS overlay. With clang-cl, use -Xclang
+# --target=x86_64-pc-windows-msvc: Cross-compilation target for Windows x64
 
 # LTO Version (Clean list)
 set(MSVC_COMMON_COMPILE_FLAGS_LTO
+    --target=x86_64-pc-windows-msvc
     -Wno-msvc-not-found
     "-Xclang" "-ivfsoverlay" "-Xclang" "${VFSOVERLAY_FILE}"
 )
 
 # Standard Version (SHELL prefix)
 set(MSVC_COMMON_COMPILE_FLAGS
+    --target=x86_64-pc-windows-msvc
     -Wno-msvc-not-found
     "SHELL:-Xclang -ivfsoverlay -Xclang \"${VFSOVERLAY_FILE}\""
 )
 
 # Initialize standard CMake flags
-set(CMAKE_C_FLAGS_INIT "${_user_mode_include_str} -Wno-msvc-not-found")
-set(CMAKE_CXX_FLAGS_INIT "${_user_mode_include_str} -Wno-msvc-not-found")
+set(CMAKE_C_FLAGS_INIT "--target=x86_64-pc-windows-msvc ${_user_mode_include_str} -Wno-msvc-not-found")
+set(CMAKE_CXX_FLAGS_INIT "--target=x86_64-pc-windows-msvc ${_user_mode_include_str} -Wno-msvc-not-found")
 
 # -----------------------------------------------------------------------------
 # 4. Linker Flags
